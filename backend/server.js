@@ -8,6 +8,20 @@ app.use(express.json());
 
 const route = '/products';
 
+// 0. ROOT: Welcome message for the base URL
+app.get('/', (req, res) => {
+    res.json({ 
+        message: "Welcome to the Tech Product Showcase API!", 
+        endpoints: {
+            getAllProducts: "GET /products",
+            getProductById: "GET /products/:id",
+            addProduct: "POST /products",
+            updateProduct: "PUT /products/:id",
+            deleteProduct: "DELETE /products/:id"
+        }
+    });
+});
+
 // 1. GET: Retrieve all products
 app.get(route, async (req, res) => {
     try {

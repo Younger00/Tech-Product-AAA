@@ -33,7 +33,7 @@
             font-weight: bold;
             color: #555;
         }
-        input, textarea {
+        input, select, textarea {
             width: 100%;
             padding: 10px;
             margin-top: 5px;
@@ -41,6 +41,7 @@
             border-radius: 4px;
             box-sizing: border-box;
             font-size: 14px;
+            background-color: #fff;
         }
         textarea {
             resize: vertical;
@@ -79,8 +80,16 @@
             <label for="brand">Brand:</label>
             <input type="text" id="brand" required placeholder="e.g. JBL">
 
+            <!-- Category Dropdown Menu Added Here -->
             <label for="category">Category:</label>
-            <input type="text" id="category" required placeholder="e.g. Audio">
+            <select id="category" required>
+                <option value="" disabled selected>Select a category</option>
+                <option value="Audio">Audio</option>
+                <option value="Laptops">Laptops</option>
+                <option value="Smartphones">Smartphones</option>
+                <option value="Accessories">Accessories</option>
+                <option value="Gaming">Gaming</option>
+            </select>
 
             <label for="price">Price ($):</label>
             <input type="number" step="0.01" id="price" required placeholder="e.g. 4500">
@@ -104,7 +113,6 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Your live Render API URL
             const apiUrl = '/products';
 
             const productData = {

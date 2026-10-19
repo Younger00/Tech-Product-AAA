@@ -8,6 +8,11 @@ app.use(express.json());
 
 const route = '/products';
 
+// Root route
+app.get('/', (req, res) => {
+    res.json({ message: "Welcome to the Local Tech Product API with SQLite!" });
+});
+
 // 1. GET: Retrieve all products
 app.get(route, (req, res) => {
     db.all("SELECT * FROM products", [], (err, rows) => {
@@ -55,8 +60,8 @@ app.post(route, (req, res) => {
     });
 });
 
-// Start server
+// Start server locally
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running locally at http://localhost:${PORT}`);
 });

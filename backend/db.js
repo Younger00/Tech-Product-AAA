@@ -1,18 +1,18 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-// This creates a local database file named 'database.sqlite' inside your backend folder
+// Creates a local file named 'database.sqlite' in your folder
 const dbPath = path.resolve(__dirname, 'database.sqlite');
 
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Error opening SQLite database', err.message);
     } else {
-        console.log('Connected to the SQLite database.');
+        console.log('Connected to the local SQLite database.');
     }
 });
 
-// Create products table automatically if it doesn't exist
+// Automatically create the products table if it doesn't exist yet
 db.run(`CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     product_name TEXT NOT NULL,
@@ -23,5 +23,4 @@ db.run(`CREATE TABLE IF NOT EXISTS products (
     description TEXT
 )`);
 
-// Export a promise-friendly wrapper or use sqlite methods directly
 module.exports = db;

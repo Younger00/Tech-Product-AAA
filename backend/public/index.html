@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local Tech Product Management</title>
+    <title>Tech Product Management</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -29,7 +29,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             overflow-x: auto;
         }
         h2 {
@@ -72,6 +72,17 @@
         button:hover {
             background-color: #0056b3;
         }
+        #formTitle {
+            color: #007bff;
+        }
+        #cancelEditBtn {
+            background-color: #6c757d;
+            margin-top: 10px;
+            display: none;
+        }
+        #cancelEditBtn:hover {
+            background-color: #5a6268;
+        }
         #responseMessage {
             margin-top: 15px;
             font-weight: bold;
@@ -87,6 +98,7 @@
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #ddd;
+            font-size: 14px;
         }
         th {
             background-color: #007bff;
@@ -95,14 +107,36 @@
         tr:hover {
             background-color: #f1f1f1;
         }
+        .action-btns button {
+            padding: 6px 10px;
+            font-size: 12px;
+            margin-right: 5px;
+            width: auto;
+            margin-top: 0;
+        }
+        .edit-btn {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .edit-btn:hover {
+            background-color: #e0a800;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
 
     <!-- Form Section -->
     <div class="container">
-        <h2>Add a Product</h2>
+        <h2 id="formTitle">Add a Product</h2>
         <form id="productForm">
+            <input type="hidden" id="productId">
+
             <label for="product_name">Product Name:</label>
             <input type="text" id="product_name" required placeholder="e.g. Speaker">
 
@@ -128,7 +162,8 @@
             <label for="description">Description:</label>
             <textarea id="description" placeholder="e.g. Clean Bluetooth speaker"></textarea>
 
-            <button type="submit">Add Product</button>
+            <button type="submit" id="submitBtn">Add Product</button>
+            <button type="button" id="cancelEditBtn" onclick="resetForm()">Cancel Edit</button>
         </form>
 
         <p id="responseMessage"></p>
@@ -144,14 +179,15 @@
                     <th>Product Name</th>
                     <th>Brand</th>
                     <th>Category</th>
-                    <th>Price ($)</th>
+                    <th>Price</th>
                     <th>Stock</th>
                     <th>Description</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="productTableBody">
                 <tr>
-                    <td colspan="7" style="text-align:center;">Loading products...</td>
+                    <td colspan="8" style="text-align:center;">Loading products...</td>
                 </tr>
             </tbody>
         </table>
@@ -161,16 +197,21 @@
         const form = document.getElementById('productForm');
         const msgElement = document.getElementById('responseMessage');
         const tableBody = document.getElementById('productTableBody');
+        const formTitle = document.getElementById('formTitle');
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
         const apiUrl = '/products';
 
-        // Function to load and display products in the table
+        let isEditing = false;
+
+        // Fetch and display all products
         async function fetchProducts() {
             try {
                 const response = await fetch(apiUrl);
                 const products = await response.json();
 
                 if (products.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No products found in database.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No products found in database.</td></tr>';
                     return;
                 }
 
@@ -185,21 +226,25 @@
                         <td>$${parseFloat(p.price).toFixed(2)}</td>
                         <td>${p.stock_quantity}</td>
                         <td>${p.description || '-'}</td>
+                        <td class="action-btns">
+                            <button class="edit-btn" onclick="editProduct(${p.id}, '${p.product_name}', '${p.brand}', '${p.category}', ${p.price}, ${p.stock_quantity}, '${p.description || ''}')">Edit</button>
+                            <button class="delete-btn" onclick="deleteProduct(${p.id})">Delete</button>
+                        </td>
                     `;
                     tableBody.appendChild(row);
                 });
             } catch (err) {
-                tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">Error loading products: ${err.message}</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">Error loading products: ${err.message}</td></tr>`;
             }
         }
 
-        // Fetch products when page loads
         fetchProducts();
 
-        // Submit form handler
+        // Handle form submit (Add or Update)
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const id = document.getElementById('productId').value;
             const productData = {
                 product_name: document.getElementById('product_name').value,
                 brand: document.getElementById('brand').value,
@@ -210,22 +255,30 @@
             };
 
             msgElement.style.color = '#555';
-            msgElement.innerText = 'Submitting...';
+            msgElement.innerText = isEditing ? 'Updating product...' : 'Submitting...';
 
             try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(productData)
-                });
+                let response;
+                if (isEditing) {
+                    response = await fetch(`${apiUrl}/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(productData)
+                    });
+                } else {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(productData)
+                    });
+                }
 
                 const result = await response.json();
 
                 if (response.ok) {
                     msgElement.style.color = 'green';
-                    msgElement.innerText = 'Success! Product added to live database.';
-                    form.reset();
-                    // Instantly refresh table with the new product!
+                    msgElement.innerText = isEditing ? 'Success! Product updated.' : 'Success! Product added.';
+                    resetForm();
                     fetchProducts();
                 } else {
                     msgElement.style.color = 'red';
@@ -236,6 +289,56 @@
                 msgElement.innerText = 'Network error: ' + err.message;
             }
         });
+
+        // Load product details into form for editing
+        function editProduct(id, name, brand, category, price, stock, description) {
+            isEditing = true;
+            document.getElementById('productId').value = id;
+            document.getElementById('product_name').value = name;
+            document.getElementById('brand').value = brand;
+            document.getElementById('category').value = category;
+            document.getElementById('price').value = price;
+            document.getElementById('stock_quantity').value = stock;
+            document.getElementById('description').value = description === 'null' ? '' : description;
+
+            formTitle.innerText = `Edit Product (ID: ${id})`;
+            submitBtn.innerText = 'Update Product';
+            cancelEditBtn.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Delete product by ID
+        async function deleteProduct(id) {
+            if (!confirm(`Are you sure you want to delete product ID ${id}?`)) return;
+
+            try {
+                const response = await fetch(`${apiUrl}/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    msgElement.style.color = 'green';
+                    msgElement.innerText = `Product ID ${id} deleted successfully.`;
+                    fetchProducts();
+                } else {
+                    const result = await response.json();
+                    alert('Error deleting product: ' + result.error);
+                }
+            } catch (err) {
+                alert('Network error: ' + err.message);
+            }
+        }
+
+        // Reset form back to 'Add' mode
+        function resetForm() {
+            isEditing = false;
+            form.reset();
+            document.getElementById('productId').value = '';
+            formTitle.innerText = 'Add a Product';
+            submitBtn.innerText = 'Add Product';
+            cancelEditBtn.style.display = 'none';
+            msgElement.innerText = '';
+        }
     </script>
 </body>
 </html>

@@ -1,17 +1,27 @@
-const mysql = require('mysql2/promise');
-require('dotenv').config();
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
-console.log("Database Config -> Host:", process.env.DB_HOST, "User:", process.env.DB_USER, "Database:", process.env.DB_NAME);
+// This creates a local database file named 'database.sqlite' inside your backend folder
+const dbPath = path.resolve(__dirname, 'database.sqlite');
 
-const db = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.MYSQLPORT || 3306,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+        console.error('Error opening SQLite database', err.message);
+    } else {
+        console.log('Connected to the SQLite database.');
+    }
 });
 
+// Create products table automatically if it doesn't exist
+db.run(`CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_name TEXT NOT NULL,
+    brand TEXT NOT NULL,
+    category TEXT NOT NULL,
+    price REAL NOT NULL,
+    stock_quantity INTEGER NOT NULL,
+    description TEXT
+)`);
+
+// Export a promise-friendly wrapper or use sqlite methods directly
 module.exports = db;

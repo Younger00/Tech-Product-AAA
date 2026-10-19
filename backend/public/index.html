@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product to Live Database</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            height: 70px;
+        }
+        button {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #responseMessage {
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Add a Product</h2>
+        <form id="productForm">
+            <label for="product_name">Product Name:</label>
+            <input type="text" id="product_name" required placeholder="e.g. Speaker">
+
+            <label for="brand">Brand:</label>
+            <input type="text" id="brand" required placeholder="e.g. JBL">
+
+            <label for="category">Category:</label>
+            <input type="text" id="category" required placeholder="e.g. Audio">
+
+            <label for="price">Price ($):</label>
+            <input type="number" step="0.01" id="price" required placeholder="e.g. 4500">
+
+            <label for="stock_quantity">Stock Quantity:</label>
+            <input type="number" id="stock_quantity" required placeholder="e.g. 4">
+
+            <label for="description">Description:</label>
+            <textarea id="description" placeholder="e.g. Clean Bluetooth speaker"></textarea>
+
+            <button type="submit">Add Product</button>
+        </form>
+
+        <p id="responseMessage"></p>
+    </div>
+
+    <script>
+        const form = document.getElementById('productForm');
+        const msgElement = document.getElementById('responseMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Your live Render API URL
+            const apiUrl = '/products';
+
+            const productData = {
+                product_name: document.getElementById('product_name').value,
+                brand: document.getElementById('brand').value,
+                category: document.getElementById('category').value,
+                price: parseFloat(document.getElementById('price').value),
+                stock_quantity: parseInt(document.getElementById('stock_quantity').value),
+                description: document.getElementById('description').value
+            };
+
+            msgElement.style.color = '#555';
+            msgElement.innerText = 'Submitting...';
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    msgElement.style.color = 'green';
+                    msgElement.innerText = 'Success! Product added to live database.';
+                    form.reset();
+                } else {
+                    msgElement.style.color = 'red';
+                    msgElement.innerText = 'Error: ' + (result.error || JSON.stringify(result));
+                }
+            } catch (err) {
+                msgElement.style.color = 'red';
+                msgElement.innerText = 'Network error: ' + err.message;
+            }
+        });
+    </script>
+</body>
+</html>

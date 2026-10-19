@@ -74,6 +74,56 @@ app.post(route, (req, res) => {
     });
 });
 
+// --- PUT: Edit/Update an existing product by ID ---
+app.put(`${route}/:id`, (req, res) => {
+    const productId = req.params.id;
+    const { product_name, brand, category, price, stock_quantity, description } = req.body;
+
+    if (!product_name || !brand || !category || price === undefined || stock_quantity === undefined) {
+        return res.status(400).json({ error: "Please fill in all required fields for updating." });
+    }
+
+    const query = `UPDATE products SET product_name = ?, brand = ?, category = ?, price = ?, stock_quantity = ?, description = ? WHERE id = ?`;
+    
+    db.run(query, [product_name, brand, category, price, stock_quantity, description, productId], function(err) {
+        if (err) {
+            console.error("Database error:", err.message);
+            return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: "Product not found" });
+        }
+        res.json({ 
+            message: "Product updated successfully!",
+            id: productId,
+            product_name,
+            brand,
+            category,
+            price,
+            stock_quantity,
+            description
+        });
+    });
+});
+
+// --- DELETE: Remove a product by ID ---
+app.delete(`${route}/:id`, (req, res) => {
+    const productId = req.params.id;
+
+    const query = `DELETE FROM products WHERE id = ?`;
+    
+    db.run(query, [productId], function(err) {
+        if (err) {
+            console.error("Database error:", err.message);
+            return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: "Product not found" });
+        }
+        res.json({ message: "Product deleted successfully!", id: productId });
+    });
+});
+
 // Start Server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
